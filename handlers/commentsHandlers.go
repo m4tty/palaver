@@ -7,14 +7,18 @@ import "time"
 import "github.com/gorilla/mux"
 import "github.com/m4tty/palaver/resources"
 import "github.com/m4tty/palaver/data"
+import "appengine"
+import "reflect"
 
-func CommentsHandler (w http.ResponseWriter, r *http.Request) {
+func CommentsHandler(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+	fmt.Println("type:", reflect.TypeOf(c))
 	currentTime := time.Now()
-	author := resources.Author{"12341234","Test Name"}
-	test2 := resources.Comment{"adsf","asdfadf",currentTime,author}
+	author := resources.Author{"12341234", "Test Name"}
+	test2 := resources.Comment{"adsf", "asdfadf", currentTime, author}
 	fmt.Println("test2:", test2)
 
-	dataManager:= data.GetDataManager("test")
+	dataManager := data.GetDataManager("test")
 	result, err := dataManager.GetCommentById("12341234")
 
 	fmt.Println("error:", err)
@@ -29,8 +33,8 @@ func CommentsHandler (w http.ResponseWriter, r *http.Request) {
 	w.Write(js)
 }
 
-func CommentHandler (w http.ResponseWriter, r *http.Request) {
+func CommentHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	commentId := vars["commentId"]
-	fmt.Fprint(w, "single comment" + commentId)
+	fmt.Fprint(w, "single comment"+commentId)
 }
