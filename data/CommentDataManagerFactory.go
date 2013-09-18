@@ -1,7 +1,12 @@
 package data
 
-func GetDataManager (storageType string) (commentDataManager CommentDataManager) {
-	var fcdm = new (FakeCommentDataManager)
+import "appengine"
+
+func GetDataManager(context *appengine.Context) (commentDataManager CommentDataManager) {
+
+	var fcdm = NewAppEngineCommentDataManager(context)
+
+	//var fcdm = new(NewAppEngineCommentDataManager(context))
 	commentDataManager = CommentDataManager(fcdm)
 	return
 }

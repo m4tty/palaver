@@ -1,0 +1,28 @@
+{
+    "requestTemplates": [],
+    "responseTemplates": [],
+    "setupAndTeardowns": [],
+    "tests": [{
+        "request": {
+            "method": "POST",
+            "protocol": "http",
+            "host": "localhost:8080",
+            "resource": "/comments",
+            "body": {  "Id": "12345",
+ "Text": "amattfadf",  "CreatedDate": "2013-06-20T03:57:20.81713409Z",  
+ "Author": {    "Id": "test@example.com",    "DisplayName": "Test Name"  }},
+            "querystring": {},
+            "headers": {}
+        },
+        "expectedResponse": {
+            "statusCode": "201",
+            "headers": {}
+        },
+        "setup": [],
+        "teardown": [],
+        "id": "post comment"
+    }]
+}
+
+
+
