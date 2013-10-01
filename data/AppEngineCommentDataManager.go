@@ -64,13 +64,26 @@ func (dm appEngineCommentDataManager) GetCommentById(id string) (comment Comment
 	// }
 	//k, _ := datastore.DecodeKey(id)
 	var ctx = *dm.currentContext
-	memvalue, _ := memcache.Get(ctx, id)
+	// memvalue, _ := memcache.Get(ctx, id)
 
-	if memvalue != nil {
+	// if memvalue != nil {
+	// 	goberr := fromGob(&comment, memvalue.Value)
+	// 	if goberr != nil {
+	// 		return Comment{}, goberr.Error()
+	// 	}
+	// 	return comment, ""
+	// }
+
+	if memvalue, err := memcache.Get(ctx, id); err == memcache.ErrCacheMiss {
+		ctx.Infof("item not in the cache")
+	} else if err != nil {
+		ctx.Errorf("error getting item: %v", err)
+	} else {
 		goberr := fromGob(&comment, memvalue.Value)
 		if goberr != nil {
 			return Comment{}, goberr.Error()
 		}
+		ctx.Infof("got from cache")
 		return comment, ""
 	}
 
