@@ -21,6 +21,40 @@
         "setup": [],
         "teardown": [],
         "id": "post comment"
+    },{
+        "request": {
+            "method": "DELETE",
+            "protocol": "http",
+            "host": "localhost:8080",
+            "resource": "/comments/12345",
+            "headers": {}
+        },
+        "expectedResponse": {
+            "statusCode": "201",
+            "headers": {}
+        },
+        "setup": [],
+        "teardown": [],
+        "id": "delete comment 1"
+    },{
+        "request": {
+            "method": "POST",
+            "protocol": "http",
+            "host": "localhost:8080",
+            "resource": "/comments",
+            "body": {  "Id": "123456",
+ "Text": "blah",  "CreatedDate": "2013-06-20T03:57:20.81713409Z",  
+ "Author": {    "Id": "test@example.com",    "DisplayName": "Test Name"  }},
+            "querystring": {},
+            "headers": {}
+        },
+        "expectedResponse": {
+            "statusCode": "201",
+            "headers": {}
+        },
+        "setup": [],
+        "teardown": [],
+        "id": "post comment 2"
     }]
 }
 

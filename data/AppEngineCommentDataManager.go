@@ -3,10 +3,38 @@ package data
 import (
 	"appengine"
 	"appengine/datastore"
+	"appengine/delay"
+	"appengine/memcache"
+	"bytes"
+	"encoding/gob"
+	"time"
 )
 
 type appEngineCommentDataManager struct {
 	currentContext *appengine.Context
+}
+
+func toGob(src interface{}) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	gob.Register(src)
+	err := enc.Encode(src)
+	if err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+func fromGob(src interface{}, b []byte) error {
+	var buf bytes.Buffer
+	_, _ = buf.Write(b)
+	gob.Register(src)
+	dec := gob.NewDecoder(&buf)
+	err := dec.Decode(src)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func NewAppEngineCommentDataManager(context *appengine.Context) *appEngineCommentDataManager {
@@ -27,7 +55,7 @@ func NewAppEngineCommentDataManager(context *appengine.Context) *appEngineCommen
 
 // }
 
-func (dm appEngineCommentDataManager) GetCommentById(id int64) (result Comment, error string) {
+func (dm appEngineCommentDataManager) GetCommentById(id string) (comment Comment, error string) {
 	error = ""
 	// currentTime := time.Now()
 	// userid := ""
@@ -35,25 +63,58 @@ func (dm appEngineCommentDataManager) GetCommentById(id int64) (result Comment, 
 	// 	userid = u.String()
 	// }
 	//k, _ := datastore.DecodeKey(id)
-	k := datastore.NewKey(*dm.currentContext, "Comment", "", id, nil)
-	//e := new(Comment)
 	var ctx = *dm.currentContext
+	memvalue, _ := memcache.Get(ctx, id)
+
+	if memvalue != nil {
+		goberr := fromGob(&comment, memvalue.Value)
+		if goberr != nil {
+			return Comment{}, goberr.Error()
+		}
+		return comment, ""
+	}
+
+	k := datastore.NewKey(*dm.currentContext, "Comment", id, 0, nil)
+	//e := new(Comment)
 
 	//if !k.Incomplete() {
 	//ctx.Infof(" key--: %v", k.Encode())
-	if err := datastore.Get(*dm.currentContext, k, &result); err != nil {
+	if err := datastore.Get(*dm.currentContext, k, &comment); err != nil {
 		//error = err
 		//serveError(*dm.currentContext, w, err)
 		ctx.Infof("err %v", err)
 		return
+	} else {
+		// Save to memcache, but only wait up to 3ms.
+		gob, err := toGob(&comment)
+
+		if err != nil {
+			ctx.Infof(" uh oh: %v", err)
+			return
+		}
+
+		done := make(chan bool, 1) // NB: buffered
+		go func() {
+			memcache.Set(ctx, &memcache.Item{
+				Key:   id,
+				Value: gob,
+			})
+			done <- true
+		}()
+		select {
+		case <-done:
+		case <-time.After(3 * time.Millisecond):
+		}
 	}
 	//}
-	ctx.Infof("result: %v", result)
+	ctx.Infof("result: %v", comment)
+
 	return
 }
 
 func (dm appEngineCommentDataManager) GetComments() (results []Comment, error string) {
 	error = ""
+	var ctx = *dm.currentContext
 	// currentTime := time.Now()
 	// userid := ""
 	// if u := user.Current(*dm.currentContext); u != nil {
@@ -64,14 +125,16 @@ func (dm appEngineCommentDataManager) GetComments() (results []Comment, error st
 	//e := new(Comment)
 
 	_, err := q.GetAll(*dm.currentContext, &results)
+
 	if err != nil {
-		//serveError(c, w, err)
+		ctx.Infof(" uh oh: %v", err)
 		return
 	}
+	ctx.Infof("comments results: %v", &results)
 	return
 }
 
-func (dm appEngineCommentDataManager) SaveComment(comment *Comment) (key int64, error string) {
+func (dm appEngineCommentDataManager) SaveComment(comment *Comment) (key string, error string) {
 	error = ""
 
 	// //c := appengine.NewContext(r)
@@ -83,7 +146,7 @@ func (dm appEngineCommentDataManager) SaveComment(comment *Comment) (key int64, 
 	// 	comment.Author.DisplayName = u.String()
 	// }
 	var logger = *dm.currentContext
-	inkey := datastore.NewKey(*dm.currentContext, "Entity", comment.Id, 0, nil)
+	inkey := datastore.NewKey(*dm.currentContext, "Comment", comment.Id, 0, nil)
 	if comment.Id == "" {
 		inkey = datastore.NewIncompleteKey(*dm.currentContext, "Comment", nil)
 	}
@@ -93,17 +156,56 @@ func (dm appEngineCommentDataManager) SaveComment(comment *Comment) (key int64, 
 	logger.Infof("comment: %v", comment)
 	anotherKey, err := datastore.Put(*dm.currentContext, inkey, comment)
 	if err != nil {
+		ctx.Infof(" uh oh: %v", err)
 		//http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 	//key = anotherKey.StringID()
 	ctx.Infof(" key: %v", anotherKey.StringID())
 	ctx.Infof(" key: %v", anotherKey.IntID())
+	key = anotherKey.StringID()
 
+	deleteCachedItem.Call(ctx, key)
 	return
 }
 
-func (dm appEngineCommentDataManager) DeleteComment(id int64) (error string) {
-	error = ""
+var deleteCachedItem = delay.Func("delete-cached-item", func(ctx appengine.Context, id string) {
+	ctx.Infof("deleting cached item - %v", id)
+	// memvalue, _ := memcache.Get(ctx, id)
+	// if memvalue != nil {
+	// 	if err := memcache.Delete(ctx, id); err != nil {
+	// 		ctx.Errorf("delete-cached-item: %v", err)
+	// 	}
+	// }
+
+	if _, err := memcache.Get(ctx, id); err == memcache.ErrCacheMiss {
+		ctx.Infof("item not in the cache")
+	} else if err != nil {
+		ctx.Errorf("error getting item: %v", err)
+	} else {
+		if err := memcache.Delete(ctx, id); err != nil {
+			ctx.Errorf("delete-cached-item: %v", err)
+		}
+	}
+
+})
+
+func (dm appEngineCommentDataManager) DeleteComment(id string) (error string) {
+	k := datastore.NewKey(*dm.currentContext, "Comment", id, 0, nil)
+	//e := new(Comment)
+	var ctx = *dm.currentContext
+
+	//if !k.Incomplete() {
+	//ctx.Infof(" key--: %v", k.Encode())
+	if err := datastore.Delete(*dm.currentContext, k); err != nil {
+		//error = err
+		//serveError(*dm.currentContext, w, err)
+		ctx.Infof("err %v", err)
+		return
+	}
+
+	deleteCachedItem.Call(ctx, id)
+	//}
+	//ctx.Infof("result: %v", result)
 	return
 }

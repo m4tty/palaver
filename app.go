@@ -3,29 +3,25 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/m4tty/palaver/handlers"
+	"github.com/mjibson/appstats"
 	"net/http"
 )
 
 func init() {
-	r := mux.NewRouter()
-	r.HandleFunc("/comments", handlers.CommentsHandler).Methods("GET")
-	r.HandleFunc("/comments", handlers.AddCommentHandler).Methods("POST")
+	var router = new(mux.Router)
+	//r := mux.NewRouter()
+	router.Handle("/comments", appstats.NewHandler(handlers.CommentsHandler)).Methods("GET")
+	router.Handle("/comments", appstats.NewHandler(handlers.AddCommentHandler)).Methods("POST")
 
-	r.HandleFunc("/comments/{commentId}", handlers.CommentHandler).Methods("GET")
+	router.Handle("/comments/{commentId}", appstats.NewHandler(handlers.CommentHandler)).Methods("GET")
+	router.Handle("/test/{commentId}", appstats.NewHandler(handlers.DeleteMeTestHandler)).Methods("GET")
 
-	http.Handle("/", r)
+	router.Handle("/comments/{commentId}", appstats.NewHandler(handlers.DeleteHandler)).Methods("DELETE")
+	http.Handle("/", router)
+
+	//router.Handle("/login/google", mpg.NewHandler(LoginGoogle)).Name("login-google")
+	//http.Handle("/", r)
 	//	http.HandleFunc("/comments/{commentId}", handlers.CommentsHandler)
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-
-	// c := appengine.NewContext(r)
-
-	// t := strconv.Itoa(c)
-	// fmt.Println(t)
-	// fmt.Println("type:", reflect.TypeOf(c))
-	fmt.Fprint(w, "Hello!")
 }

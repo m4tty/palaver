@@ -14,7 +14,7 @@ type FakeCommentDataManager struct {
 
 // }
 
-func (dm FakeCommentDataManager) GetCommentById(id int64) (result Comment, error string) {
+func (dm FakeCommentDataManager) GetCommentById(id string) (result Comment, error string) {
 	error = ""
 	currentTime := time.Now()
 	author := Author{"12341234MATTTTTT", "Test Name"}
@@ -22,12 +22,12 @@ func (dm FakeCommentDataManager) GetCommentById(id int64) (result Comment, error
 	return
 }
 
-func (dm FakeCommentDataManager) SaveComment(comment *Comment) (key int64, error string) {
+func (dm FakeCommentDataManager) SaveComment(comment *Comment) (key string, error string) {
 	error = ""
 	return
 }
 
-func (dm FakeCommentDataManager) DeleteComment(id int64) (error string) {
+func (dm FakeCommentDataManager) DeleteComment(id string) (error string) {
 	error = ""
 	return
 }

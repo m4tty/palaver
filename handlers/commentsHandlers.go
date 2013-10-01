@@ -11,23 +11,22 @@ import "github.com/m4tty/palaver/resources"
 import "github.com/m4tty/palaver/data"
 import "appengine"
 import "appengine/user"
-import "strconv"
 
 //import "reflect"
 
-func CommentsHandler(w http.ResponseWriter, r *http.Request) {
-	c := appengine.NewContext(r)
-	u := user.Current(c)
-	if u == nil {
-		url, err := user.LoginURL(c, r.URL.String())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Location", url)
-		w.WriteHeader(http.StatusFound)
-		return
-	}
+func CommentsHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	//c := appengine.NewContext(r)
+	//u := user.Current(c)
+	// if u == nil {
+	// 	url, err := user.LoginURL(c, r.URL.String())
+	// 	if err != nil {
+	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// 	w.Header().Set("Location", url)
+	// 	w.WriteHeader(http.StatusFound)
+	// 	return
+	// }
 
 	dataManager := data.GetDataManager(&c)
 	result, err := dataManager.GetComments()
@@ -45,33 +44,28 @@ func CommentsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(js)
 }
 
-func CommentHandler(w http.ResponseWriter, r *http.Request) {
-	c := appengine.NewContext(r)
-	u := user.Current(c)
-	if u == nil {
-		url, err := user.LoginURL(c, r.URL.String())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Location", url)
-		w.WriteHeader(http.StatusFound)
-		return
-	}
+func CommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	//c := appengine.NewContext(r)
+	//u := user.Current(c)
+
+	// if u == nil {
+	// 	url, err := user.LoginURL(c, r.URL.String())
+	// 	if err != nil {
+	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// 	w.Header().Set("Location", url)
+	// 	w.WriteHeader(http.StatusFound)
+	// 	return
+	// }
 
 	vars := mux.Vars(r)
 	commentId := vars["commentId"]
 
-	i, convErr := strconv.ParseInt(commentId, 10, 64)
-	if convErr != nil {
-		// handle error
-		fmt.Println(convErr)
-		//os.Exit(2)
-	}
-	c.Infof("commentId: %v", i)
+	c.Infof("commentId: %v", commentId)
 	dataManager := data.GetDataManager(&c)
-	result, err := dataManager.GetCommentById(i)
-	c.Infof("1: %v", i)
+	result, err := dataManager.GetCommentById(commentId)
+
 	fmt.Println("error:", err)
 
 	errActual := errors.New(err)
@@ -87,6 +81,57 @@ func CommentHandler(w http.ResponseWriter, r *http.Request) {
 	c.Infof("3: %v", commentId)
 	w.Write(js)
 }
+
+func DeleteMeTestHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	//c := appengine.NewContext(r)
+	c.Infof("d me: %v", c)
+	u := user.Current(c)
+	if u == nil {
+		c.Infof("d me delete1")
+		url, err := user.LoginURL(c, r.URL.String())
+		c.Infof("url %v", url)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		c.Infof("d me delete1a")
+		w.Header().Set("Location", url)
+		w.WriteHeader(http.StatusFound)
+		return
+	}
+	c.Infof("d me out: %v", c)
+}
+
+func DeleteHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	//c := appengine.NewContext(r)
+	c.Infof("ctx: %v", c)
+	//u := user.Current(c)
+	// if u == nil {
+	// 	c.Infof("delete1")
+	// 	url, err := user.LoginURL(c, r.URL.String())
+	// 	c.Infof("url %v", url)
+	// 	if err != nil {
+	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// 		return
+	// 	}
+	// 	c.Infof("delete1a")
+	// 	w.Header().Set("Location", url)
+	// 	w.WriteHeader(http.StatusFound)
+	// 	return
+	// }
+	c.Infof("delete2")
+
+	vars := mux.Vars(r)
+	commentId := vars["commentId"]
+
+	c.Infof("commentId: %v", commentId)
+	dataManager := data.GetDataManager(&c)
+	err := dataManager.DeleteComment(commentId)
+
+	fmt.Println("error:", err)
+
+}
+
 func serveError(c appengine.Context, w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -94,8 +139,8 @@ func serveError(c appengine.Context, w http.ResponseWriter, err error) {
 	c.Errorf("%v", err)
 }
 
-func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
-	c := appengine.NewContext(r)
+func AddCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	//c := appengine.NewContext(r)
 	vars := mux.Vars(r)
 	commentId := vars["commentId"]
 	fmt.Fprint(w, "single comment"+commentId)
