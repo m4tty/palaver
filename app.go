@@ -16,7 +16,7 @@ func init() {
 	router.Handle("/comments", appstats.NewHandler(handlers.AddCommentHandler)).Methods("POST")
 
 	router.Handle("/comments/{commentId}", appstats.NewHandler(handlers.CommentHandler)).Methods("GET")
-	router.Handle("/test/{commentId}", appstats.NewHandler(handlers.DeleteMeTestHandler)).Methods("GET")
+	//router.Handle("/test/{commentId}", appstats.NewHandler(handlers.DeleteMeTestHandler)).Methods("GET")
 
 	router.Handle("/comments/{commentId}", appstats.NewHandler(handlers.DeleteHandler)).Methods("DELETE")
 	http.Handle("/", router)

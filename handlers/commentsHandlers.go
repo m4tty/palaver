@@ -3,140 +3,104 @@ package handlers
 import "encoding/json"
 import "net/http"
 import "fmt"
-import "errors"
-import "io"
+
 import "github.com/gorilla/mux"
 
 import "github.com/m4tty/palaver/resources"
 import "github.com/m4tty/palaver/data"
 import "appengine"
-import "appengine/user"
+import "time"
+import _ "errors"
 
-//import "reflect"
+const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 func CommentsHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
-	//c := appengine.NewContext(r)
-	//u := user.Current(c)
-	// if u == nil {
-	// 	url, err := user.LoginURL(c, r.URL.String())
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	w.Header().Set("Location", url)
-	// 	w.WriteHeader(http.StatusFound)
-	// 	return
-	// }
 
 	dataManager := data.GetDataManager(&c)
 	result, err := dataManager.GetComments()
 
-	c.Infof("result: %v", result)
-
-	if err != "" {
-		fmt.Println("error:", err)
+	//err = errors.New("asdf")
+	if err != nil {
+		serveError(c, w, err)
+		return
 	}
 
 	js, error := json.MarshalIndent(result, "", "  ")
 	if error != nil {
-		fmt.Println("error:", error)
+		serveError(c, w, error)
+		return
 	}
 	w.Write(js)
+	return
 }
 
 func CommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
-	//c := appengine.NewContext(r)
-	//u := user.Current(c)
-
-	// if u == nil {
-	// 	url, err := user.LoginURL(c, r.URL.String())
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	w.Header().Set("Location", url)
-	// 	w.WriteHeader(http.StatusFound)
-	// 	return
-	// }
 
 	vars := mux.Vars(r)
 	commentId := vars["commentId"]
 
-	c.Infof("commentId: %v", commentId)
 	dataManager := data.GetDataManager(&c)
 	result, err := dataManager.GetCommentById(commentId)
 
-	fmt.Println("error:", err)
-
-	errActual := errors.New(err)
-
-	if err != "" {
-		serveError(c, w, errActual)
+	if checkLastModified(w, r, result.LastModified) {
+		return
 	}
-	c.Infof("2: %v", commentId)
+
+	if err != nil {
+		serveError(c, w, err)
+	}
 	js, error := json.MarshalIndent(result, "", "  ")
 	if error != nil {
-		fmt.Println("error:", error)
+		serveError(c, w, error)
 	}
-	c.Infof("3: %v", commentId)
+
 	w.Write(js)
 }
 
-func DeleteMeTestHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
-	//c := appengine.NewContext(r)
-	c.Infof("d me: %v", c)
-	u := user.Current(c)
-	if u == nil {
-		c.Infof("d me delete1")
-		url, err := user.LoginURL(c, r.URL.String())
-		c.Infof("url %v", url)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		c.Infof("d me delete1a")
-		w.Header().Set("Location", url)
-		w.WriteHeader(http.StatusFound)
-		return
-	}
-	c.Infof("d me out: %v", c)
+type appError struct {
+	Id      string
+	Error   error
+	Message string
+	Code    int
 }
 
 func DeleteHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
-	//c := appengine.NewContext(r)
-	c.Infof("ctx: %v", c)
-	//u := user.Current(c)
-	// if u == nil {
-	// 	c.Infof("delete1")
-	// 	url, err := user.LoginURL(c, r.URL.String())
-	// 	c.Infof("url %v", url)
-	// 	if err != nil {
-	// 		http.Error(w, err.Error(), http.StatusInternalServerError)
-	// 		return
-	// 	}
-	// 	c.Infof("delete1a")
-	// 	w.Header().Set("Location", url)
-	// 	w.WriteHeader(http.StatusFound)
-	// 	return
-	// }
-	c.Infof("delete2")
 
 	vars := mux.Vars(r)
 	commentId := vars["commentId"]
-
-	c.Infof("commentId: %v", commentId)
 	dataManager := data.GetDataManager(&c)
 	err := dataManager.DeleteComment(commentId)
+	if err != nil {
+		serveError(c, w, err)
+	}
 
-	fmt.Println("error:", err)
+}
+
+func serveJSONError(c appengine.Context, w http.ResponseWriter, code int, err error) {
+	w.WriteHeader(code)
+	w.Header().Set("Content-Type", "text/json; charset=utf-8")
+
+	ae := &appError{"", err, http.StatusText(code), code}
+
+	//io.WriteString(w, http.StatusText(code))
+	c.Errorf("%v", err.Error)
+
+	js, _ := json.MarshalIndent(ae, "", "  ")
+	// if error != nil {
+	// 	serveError(c, w, error)
+
+	// }
+
+	w.Write(js)
 
 }
 
 func serveError(c appengine.Context, w http.ResponseWriter, err error) {
-	w.WriteHeader(http.StatusInternalServerError)
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	io.WriteString(w, "Internal Server Error")
-	c.Errorf("%v", err)
+	serveJSONError(c, w, 500, err)
+	// w.WriteHeader(http.StatusInternalServerError)
+	// w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	// io.WriteString(w, "Internal Server Error")
+	// c.Errorf("%v", err.Error)
 }
 
 func AddCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
@@ -149,16 +113,18 @@ func AddCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Reque
 	var com resources.Comment
 	err := decoder.Decode(&com)
 	if err != nil {
-		//panic()
+		serveError(c, w, err)
 	}
 	var dCom *data.Comment = new(data.Comment)
+	dCom.LastModified = time.Now().UTC()
 	mapResourceToData(&com, dCom)
 
-	c.Infof("dCom: %v", dCom)
 	//c := appengine.NewContext(r)
 	dataManager := data.GetDataManager(&c)
-	dataManager.SaveComment(dCom)
-	fmt.Fprint(w, "single comment"+com.Id)
+	_, saveErr := dataManager.SaveComment(dCom)
+	if saveErr != nil {
+		serveError(c, w, saveErr)
+	}
 }
 
 func mapResourceToData(commentResource *resources.Comment, commentData *data.Comment) {
@@ -169,4 +135,51 @@ func mapResourceToData(commentResource *resources.Comment, commentData *data.Com
 	commentData.Author = *a
 	commentData.Author.Id = commentResource.Author.Id
 	commentData.Author.DisplayName = commentResource.Author.DisplayName
+}
+
+func checkLastModified(w http.ResponseWriter, r *http.Request, modtime time.Time) bool {
+	if modtime.IsZero() {
+		return false
+	}
+
+	if t, err := time.Parse(TimeFormat, r.Header.Get("If-Modified-Since")); err == nil && modtime.Before(t.Add(1*time.Second)) {
+		h := w.Header()
+		delete(h, "Content-Type")
+		delete(h, "Content-Length")
+		w.WriteHeader(http.StatusNotModified)
+		return true
+
+	}
+
+	w.Header().Set("Last-Modified", modtime.UTC().Format(TimeFormat))
+	return false
+}
+
+func checkETag(w http.ResponseWriter, r *http.Request) (rangeReq string, done bool) {
+	etag := w.Header().Get("Etag")
+	rangeReq = r.Header.Get("Range")
+
+	if ir := r.Header.Get("If-Range"); ir != "" && ir != etag {
+		rangeReq = ""
+	}
+
+	if inm := r.Header.Get("If-None-Match"); inm != "" {
+		// Must know ETag.
+		if etag == "" {
+			return rangeReq, false
+		}
+
+		if r.Method != "GET" && r.Method != "HEAD" {
+			return rangeReq, false
+		}
+
+		if inm == etag || inm == "*" {
+			h := w.Header()
+			delete(h, "Content-Type")
+			delete(h, "Content-Length")
+			w.WriteHeader(http.StatusNotModified)
+			return "", true
+		}
+	}
+	return rangeReq, false
 }

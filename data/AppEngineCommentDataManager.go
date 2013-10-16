@@ -55,55 +55,37 @@ func NewAppEngineCommentDataManager(context *appengine.Context) *appEngineCommen
 
 // }
 
-func (dm appEngineCommentDataManager) GetCommentById(id string) (comment Comment, error string) {
-	error = ""
-	// currentTime := time.Now()
-	// userid := ""
-	// if u := user.Current(*dm.currentContext); u != nil {
-	// 	userid = u.String()
-	// }
-	//k, _ := datastore.DecodeKey(id)
-	var ctx = *dm.currentContext
-	// memvalue, _ := memcache.Get(ctx, id)
+func (dm appEngineCommentDataManager) GetCommentById(id string) (comment Comment, err error) {
 
-	// if memvalue != nil {
-	// 	goberr := fromGob(&comment, memvalue.Value)
-	// 	if goberr != nil {
-	// 		return Comment{}, goberr.Error()
-	// 	}
-	// 	return comment, ""
-	// }
+	var ctx = *dm.currentContext
 
 	if memvalue, err := memcache.Get(ctx, id); err == memcache.ErrCacheMiss {
 		ctx.Infof("item not in the cache")
 	} else if err != nil {
 		ctx.Errorf("error getting item: %v", err)
+		return Comment{}, err
 	} else {
 		goberr := fromGob(&comment, memvalue.Value)
 		if goberr != nil {
-			return Comment{}, goberr.Error()
+			return Comment{}, goberr
 		}
-		ctx.Infof("got from cache")
-		return comment, ""
+		return comment, nil
 	}
 
 	k := datastore.NewKey(*dm.currentContext, "Comment", id, 0, nil)
-	//e := new(Comment)
 
-	//if !k.Incomplete() {
-	//ctx.Infof(" key--: %v", k.Encode())
 	if err := datastore.Get(*dm.currentContext, k, &comment); err != nil {
 		//error = err
 		//serveError(*dm.currentContext, w, err)
-		ctx.Infof("err %v", err)
-		return
+		ctx.Errorf("GetCommentById error returned from datastore: %v", err)
+		return Comment{}, err
 	} else {
 		// Save to memcache, but only wait up to 3ms.
 		gob, err := toGob(&comment)
 
 		if err != nil {
-			ctx.Infof(" uh oh: %v", err)
-			return
+			ctx.Errorf("A problem running toGob for caching: %v", err)
+			return Comment{}, err
 		}
 
 		done := make(chan bool, 1) // NB: buffered
@@ -119,36 +101,28 @@ func (dm appEngineCommentDataManager) GetCommentById(id string) (comment Comment
 		case <-time.After(3 * time.Millisecond):
 		}
 	}
-	//}
-	ctx.Infof("result: %v", comment)
 
 	return
 }
 
-func (dm appEngineCommentDataManager) GetComments() (results []Comment, error string) {
-	error = ""
+func (dm appEngineCommentDataManager) GetComments() (results []Comment, err error) {
+
 	var ctx = *dm.currentContext
-	// currentTime := time.Now()
-	// userid := ""
-	// if u := user.Current(*dm.currentContext); u != nil {
-	// 	userid = u.String()
-	// }
+
 	q := datastore.NewQuery("Comment")
-	//k := datastore.NewKey(*dm.currentContext, "Comment", "", 0, nil)
-	//e := new(Comment)
 
-	_, err := q.GetAll(*dm.currentContext, &results)
+	_, getallerr := q.GetAll(*dm.currentContext, &results)
 
-	if err != nil {
-		ctx.Infof(" uh oh: %v", err)
+	if getallerr != nil {
+		err = getallerr
+		ctx.Errorf("Error calling GetAll: %v", getallerr)
 		return
 	}
-	ctx.Infof("comments results: %v", &results)
+
 	return
 }
 
-func (dm appEngineCommentDataManager) SaveComment(comment *Comment) (key string, error string) {
-	error = ""
+func (dm appEngineCommentDataManager) SaveComment(comment *Comment) (key string, err error) {
 
 	// //c := appengine.NewContext(r)
 	// currentTime := time.Now()
@@ -203,7 +177,7 @@ var deleteCachedItem = delay.Func("delete-cached-item", func(ctx appengine.Conte
 
 })
 
-func (dm appEngineCommentDataManager) DeleteComment(id string) (error string) {
+func (dm appEngineCommentDataManager) DeleteComment(id string) (err error) {
 	k := datastore.NewKey(*dm.currentContext, "Comment", id, 0, nil)
 	//e := new(Comment)
 	var ctx = *dm.currentContext
@@ -214,7 +188,7 @@ func (dm appEngineCommentDataManager) DeleteComment(id string) (error string) {
 		//error = err
 		//serveError(*dm.currentContext, w, err)
 		ctx.Infof("err %v", err)
-		return
+		return err
 	}
 
 	deleteCachedItem.Call(ctx, id)
