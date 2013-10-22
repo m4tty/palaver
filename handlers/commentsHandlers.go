@@ -48,10 +48,12 @@ func CommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		serveError(c, w, err)
+		return
 	}
 	js, error := json.MarshalIndent(result, "", "  ")
 	if error != nil {
 		serveError(c, w, error)
+		return
 	}
 
 	w.Write(js)
@@ -81,26 +83,15 @@ func serveJSONError(c appengine.Context, w http.ResponseWriter, code int, err er
 	w.Header().Set("Content-Type", "text/json; charset=utf-8")
 
 	ae := &appError{"", err, http.StatusText(code), code}
-
-	//io.WriteString(w, http.StatusText(code))
 	c.Errorf("%v", err.Error)
-
 	js, _ := json.MarshalIndent(ae, "", "  ")
-	// if error != nil {
-	// 	serveError(c, w, error)
-
-	// }
-
 	w.Write(js)
 
 }
 
 func serveError(c appengine.Context, w http.ResponseWriter, err error) {
 	serveJSONError(c, w, 500, err)
-	// w.WriteHeader(http.StatusInternalServerError)
-	// w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	// io.WriteString(w, "Internal Server Error")
-	// c.Errorf("%v", err.Error)
+
 }
 
 func AddCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {

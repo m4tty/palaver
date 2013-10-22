@@ -77,6 +77,11 @@ func (dm appEngineCommentDataManager) GetCommentById(id string) (comment Comment
 	if err := datastore.Get(*dm.currentContext, k, &comment); err != nil {
 		//error = err
 		//serveError(*dm.currentContext, w, err)
+
+		if (err == datastore.ErrNoSuchEntity) {
+//TODO: wrap errors returned from datastore so app engine concepts don't leak
+			ctx.Errorf("errnosuch: %v", err)
+		}
 		ctx.Errorf("GetCommentById error returned from datastore: %v", err)
 		return Comment{}, err
 	} else {
