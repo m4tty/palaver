@@ -46,6 +46,14 @@ func NewAppEngineCommentDataManager(context *appengine.Context) *appEngineCommen
 	return a
 }
 
+type DataError struct {
+	Id      string
+	Error   error
+	Message string
+}
+
+func (e *DataError) Error() string { return e.Message }
+
 // GetCommentsByTarget() (results []Comment, error string);
 // GetCommentsById(id string) (result Comment, error string);
 // SaveComment(comment Comment) (error string);
@@ -78,8 +86,8 @@ func (dm appEngineCommentDataManager) GetCommentById(id string) (comment Comment
 		//error = err
 		//serveError(*dm.currentContext, w, err)
 
-		if (err == datastore.ErrNoSuchEntity) {
-//TODO: wrap errors returned from datastore so app engine concepts don't leak
+		if err == datastore.ErrNoSuchEntity {
+			//TODO: wrap errors returned from datastore so app engine concepts don't leak
 			ctx.Errorf("errnosuch: %v", err)
 		}
 		ctx.Errorf("GetCommentById error returned from datastore: %v", err)
