@@ -19,6 +19,8 @@ func init() {
 	//router.Handle("/test/{commentId}", appstats.NewHandler(handlers.DeleteMeTestHandler)).Methods("GET")
 
 	router.Handle("/comments/{commentId}", appstats.NewHandler(handlers.DeleteHandler)).Methods("DELETE")
+	router.Handle("/comments/{commentId}/like", appstats.NewHandler(handlers.LikeCommentHandler)).Methods("POST")
+	router.Handle("/comments/{commentId}/dislike", appstats.NewHandler(handlers.DislikeCommentHandler)).Methods("POST")
 	http.Handle("/", router)
 
 	//router.Handle("/login/google", mpg.NewHandler(LoginGoogle)).Name("login-google")

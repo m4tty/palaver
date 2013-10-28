@@ -55,6 +55,23 @@
         "setup": [],
         "teardown": [],
         "id": "post comment 2"
+    },{
+        "request": {
+            "method": "POST",
+            "protocol": "http",
+            "host": "localhost:8080",
+            "resource": "/comments/123456/like",
+            "body":{},
+            "querystring": {},
+            "headers": {}
+        },
+        "expectedResponse": {
+            "statusCode": "201",
+            "headers": {}
+        },
+        "setup": [],
+        "teardown": [],
+        "id": "post like"
     }]
 }
 

@@ -14,7 +14,18 @@ type Comment struct {
 	Author       Author    `bson:"author"`
 	Likes        int       `bson:"likes"`
 	Dislikes     int       `bson:"dislikes"`
+	LikedBy      []string  `bson:"likedBy"`
+	DislikedBy   []string  `bson:"dislikedBy"`
 }
+
+// func AppendIfMissing(slice []int, i int) []int {
+//     for _, ele := range slice {
+//         if ele == i {
+//             return slice
+//         }
+//     }
+//     return append(slice, i)
+// }
 
 //isApproved, isFlagged, isDeleted
 
@@ -28,7 +39,7 @@ type Author struct {
 }
 
 type Avatar struct {
-	url string `bson:"url"`
+	Url string `bson:"url"`
 }
 
 // Gamification,

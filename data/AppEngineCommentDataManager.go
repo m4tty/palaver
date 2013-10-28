@@ -47,8 +47,8 @@ func NewAppEngineCommentDataManager(context *appengine.Context) *appEngineCommen
 }
 
 type DataError struct {
-	Id      string
-	Error   error
+	Id string
+	//Error   error
 	Message string
 }
 

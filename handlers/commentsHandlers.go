@@ -9,12 +9,27 @@ import "github.com/gorilla/mux"
 import "github.com/m4tty/palaver/resources"
 import "github.com/m4tty/palaver/data"
 import "appengine"
+import "appengine/user"
 import "time"
-import _ "errors"
+import "errors"
 
 const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 func CommentsHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	u := user.Current(c)
+
+	if u == nil {
+		url, err := user.LoginURL(c, r.URL.String())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Location", url)
+		w.WriteHeader(http.StatusFound)
+		return
+		//serveError(c, w, errors.New("Unable to determine the acting user."))
+		//return
+	}
 
 	dataManager := data.GetDataManager(&c)
 	result, err := dataManager.GetComments()
@@ -83,7 +98,7 @@ func serveJSONError(c appengine.Context, w http.ResponseWriter, code int, err er
 	w.Header().Set("Content-Type", "text/json; charset=utf-8")
 
 	ae := &appError{"", err, http.StatusText(code), code}
-	c.Errorf("%v", err.Error)
+	c.Errorf("%v", err)
 	js, _ := json.MarshalIndent(ae, "", "  ")
 	w.Write(js)
 
@@ -107,6 +122,7 @@ func AddCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Reque
 		serveError(c, w, err)
 	}
 	var dCom *data.Comment = new(data.Comment)
+
 	dCom.LastModified = time.Now().UTC()
 	mapResourceToData(&com, dCom)
 
@@ -118,14 +134,103 @@ func AddCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Reque
 	}
 }
 
+func LikeCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	u := user.Current(c)
+
+	if u == nil {
+		url, err := user.LoginURL(c, r.URL.String())
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Location", url)
+		w.WriteHeader(http.StatusFound)
+		return
+		//serveError(c, w, errors.New("Unable to determine the acting user."))
+		//return
+	}
+	//c := appengine.NewContext(r)
+	vars := mux.Vars(r)
+	commentId := vars["commentId"]
+	fmt.Fprint(w, "single comment"+commentId)
+
+	dataManager := data.GetDataManager(&c)
+	result, err := dataManager.GetCommentById(commentId)
+	if err != nil {
+		serveError(c, w, err)
+	}
+	appendUserIfMissing(result.LikedBy, u.ID)
+	result.Likes = len(result.LikedBy)
+	result.LastModified = time.Now().UTC()
+
+	//c := appengine.NewContext(r)
+	//dataManager := data.GetDataManager(&c)
+	_, saveErr := dataManager.SaveComment(&result)
+	if saveErr != nil {
+		serveError(c, w, saveErr)
+	}
+}
+
+func DislikeCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	u := user.Current(c)
+
+	if u == nil {
+		serveError(c, w, errors.New("Unable to determine the acting user."))
+		return
+	}
+
+	vars := mux.Vars(r)
+	commentId := vars["commentId"]
+	fmt.Fprint(w, "single comment"+commentId)
+
+	dataManager := data.GetDataManager(&c)
+	result, err := dataManager.GetCommentById(commentId)
+	if err != nil {
+		serveError(c, w, err)
+	}
+	appendUserIfMissing(result.DislikedBy, u.ID)
+	result.Dislikes = len(result.DislikedBy)
+	result.LastModified = time.Now().UTC()
+
+	//c := appengine.NewContext(r)
+	//dataManager := data.GetDataManager(&c)
+	_, saveErr := dataManager.SaveComment(&result)
+	if saveErr != nil {
+		serveError(c, w, saveErr)
+	}
+}
+
+func appendUserIfMissing(slice []string, i string) []string {
+	for _, ele := range slice {
+		if ele == i {
+			return slice
+		}
+	}
+	return append(slice, i)
+}
+
 func mapResourceToData(commentResource *resources.Comment, commentData *data.Comment) {
 	commentData.Id = commentResource.Id
 	commentData.Text = commentResource.Text
 	commentData.CreatedDate = commentResource.CreatedDate
+	commentData.LastModified = time.Now().UTC()
+	commentData.TargetURN = commentResource.TargetURN
+	commentData.ParentURN = commentResource.ParentURN
+	commentData.Likes = commentResource.Likes
+	commentData.Dislikes = commentResource.Dislikes
+	commentData.LikedBy = commentResource.LikedBy
+	commentData.DislikedBy = commentResource.DislikedBy
+
 	var a *data.Author = new(data.Author)
 	commentData.Author = *a
 	commentData.Author.Id = commentResource.Author.Id
 	commentData.Author.DisplayName = commentResource.Author.DisplayName
+	commentData.Author.Email = commentResource.Author.Email
+	commentData.Author.ProfileUrl = commentResource.Author.ProfileUrl
+
+	var av *data.Avatar = new(data.Avatar)
+	commentData.Author.Avatar = *av
+	commentData.Author.Avatar.Url = commentResource.Author.Avatar.Url
 }
 
 func checkLastModified(w http.ResponseWriter, r *http.Request, modtime time.Time) bool {
