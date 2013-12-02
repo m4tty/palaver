@@ -16,6 +16,10 @@ import "errors"
 const TimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 func CommentsHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	//c := appengine.NewContext(r)
+
+	//TODO: don't use the user from context, and leverage instead injecting User in to the Handler, which will come
+	// over from the auth library (probably)
 	u := user.Current(c)
 
 	if u == nil {

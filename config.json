@@ -1,0 +1,13 @@
+{
+	"cookieSecret": "asdfasdfsdfasdfasdf",
+    "twitterAuth": {
+    	"secret" : "asdfasdfasdf",
+    	"clientId" : "asdfasdfasdf",
+    	"callback" : "http://localhost:8080/auth/login/twitter"
+    },
+    "googleAuth": {
+    	"secret" : "asdfasdfasdf",
+    	"clientId" : "asdfasdfasdfasdf",
+    	"callback" : "http://localhost:8080/auth/login/google"
+    }
+}

@@ -1,3 +1,4 @@
 *~
 palaver
 *.DS_Store
+*.prod.json
