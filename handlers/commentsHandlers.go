@@ -23,16 +23,8 @@ func CommentsHandler(c appengine.Context, w http.ResponseWriter, r *http.Request
 	u := user.Current(c)
 
 	if u == nil {
-		url, err := user.LoginURL(c, r.URL.String())
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		w.Header().Set("Location", url)
-		w.WriteHeader(http.StatusFound)
+		http.Error(w, http.StatusText(401), 401)
 		return
-		//serveError(c, w, errors.New("Unable to determine the acting user."))
-		//return
 	}
 
 	dataManager := data.GetDataManager(&c)

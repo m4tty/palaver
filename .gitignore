@@ -1,4 +1,8 @@
 *~
+static/node_modules
+static/build
+static/bin
+static/vendor
 palaver
 *.DS_Store
 *.prod.json
