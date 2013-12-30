@@ -12,6 +12,58 @@
 
 		<link rel="stylesheet" href="css/<%= title %><% if (min) { %>.min<% } %>.css">
 
+		<style media="screen" type="text/css">
+		/*
+ * Style tweaks
+ * --------------------------------------------------
+ */
+html,
+body {
+  overflow-x: hidden; /* Prevent scroll on narrow devices */
+}
+
+footer {
+  padding: 30px 0;
+}
+
+/*
+ * Off Canvas
+ * --------------------------------------------------
+ */
+@media screen and (max-width: 767px) {
+  .row-offcanvas {
+    position: relative;
+    -webkit-transition: all 0.25s ease-out;
+    -moz-transition: all 0.25s ease-out;
+    transition: all 0.25s ease-out;
+  }
+
+  .row-offcanvas-right
+  .sidebar-offcanvas {
+    right: -50%; /* 6 columns */
+  }
+
+  .row-offcanvas-left
+  .sidebar-offcanvas {
+    left: -50%; /* 6 columns */
+  }
+
+  .row-offcanvas-right.active {
+    right: 50%; /* 6 columns */
+  }
+
+  .row-offcanvas-left.active {
+    left: 50%; /* 6 columns */
+  }
+
+  .sidebar-offcanvas {
+    position: absolute;
+    top: 0;
+    width: 50%; /* 6 columns */
+  }
+}
+		</style>
+
 	</head>
 	<body>
 <nav class="navbar-wrapper navbar-default navbar-static-top" role="navigation">
@@ -24,6 +76,9 @@
               <span class="icon-bar"></span>
               <span class="icon-bar"></span>
             </button>
+            <p class="pull-left visible-xs">
+           		<button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
+         	</p> 
             <a class="navbar-brand" href="#">you, et al</a>
           </div>
 
@@ -60,21 +115,36 @@
         </div>
         </nav>
         <div class="container">
-          <div class="row">
-            <div class="col-lg-3">
+          <div class="row row-offcanvas row-offcanvas-left">
+          <!--   <div class="col-lg-3">
 
             	<div class="list-group">
             		<a href="#" class="list-group-item">test<span class="badge">23</span></a>
-            	</div>
+            	</div>-->
+			
 
-            	<ul class="nav nav-pills nav-stacked">
+
+
+          <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
+          <div class="list-group">
+            <a href="#" class="list-group-item active">Link</a>
+            <a href="#" class="list-group-item">Link 1</a>
+            <a href="#" class="list-group-item">Link 2</a>
+            <a href="#" class="list-group-item">Link 3</a>
+            <a href="#" class="list-group-item">Link 4</a>
+            <a href="#" class="list-group-item">Link 5</a>
+            <a href="#" class="list-group-item">Link 6</a>
+            <a href="#" class="list-group-item">Link 7</a>
+          </div>
+        </div>
+          <!--  	<ul class="nav nav-pills nav-stacked">
             		<li><a href="#">test<span class="badge">23</span></a></li>
             		<li class="active"><a href="#">test<span class="badge">23</span></a></li>
             		<li><a href="#">test<span class="badge">23</span></a></li>
             		<li><a href="#">test<span class="badge">23</span></a></li>
             	</ul>
 
-            </div>
+            </div>-->
             <div class="col-md-4">
              
               <h3 class="text-center">Type 2</h3>
@@ -89,27 +159,18 @@
             </div>
           </div>
         </div>
-        <footer>
-          <div class="container">
-          <div class="row">
-            <div class="col-md-4">&copy; 2013</div>
-            <div class="col-md-4">
-              <ul class="nav nav-pills">
-                <li class="active"><a href="#">About Us</a></li>
-                <li><a href="#">Support 24x7</a></li>
-                <li><a href="#">Privacy Policy</a></li>
-              </ul>
-            </div>
-            <div class="col-md-4">
-              <h3 class="text-right">you, et al</h3>
-            </div>
-          </div>
-          </div>
-        </footer>
+
 
 		<div id="application">
 		</div> 
 
 	</body>
 	<script data-main="js/main" src="js/<%= title %><% if (min) { %>.min<% } %>.js"></script>
+	<script>
+		$(document).ready(function() {
+		  $('[data-toggle=offcanvas]').click(function() {
+		    $('.row-offcanvas').toggleClass('active');
+		  });
+		});
+	</script>
 </html>
