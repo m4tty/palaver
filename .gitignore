@@ -1,9 +1,9 @@
 *~
-static/dist
-static/node_modules
-static/build
-static/bin
-static/vendor
+web/static/dist
+web/static/node_modules
+web/static/build
+web/static/bin
+web/static/vendor
 palaver
 *.DS_Store
 *.prod.json

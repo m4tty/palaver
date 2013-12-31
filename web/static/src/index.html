@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+		<title><%= title %></title>
+		<meta name="description" content="">
+		<meta name="author" content="">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<link rel="stylesheet" href="css/<%= title %><% if (min) { %>.min<% } %>.css">
+
+	</head>
+	<body>
+		<div id="topnav">
+		</div> 
+        <div class="container">
+          <div class="row row-offcanvas row-offcanvas-left">
+          <!--   <div class="col-lg-3">
+
+            	<div class="list-group">
+            		<a href="#" class="list-group-item">test<span class="badge">23</span></a>
+            	</div>-->
+			
+
+
+
+          <div class="col-xs-6 col-sm-3 sidebar-offcanvas" id="sidebar" role="navigation">
+          <div class="list-group">
+            <a href="#" class="list-group-item active">Link</a>
+            <a href="#" class="list-group-item">Link 1</a>
+            <a href="#" class="list-group-item">Link 2</a>
+            <a href="#" class="list-group-item">Link 3</a>
+            <a href="#" class="list-group-item">Link 4</a>
+            <a href="#" class="list-group-item">Link 5</a>
+            <a href="#" class="list-group-item">Link 6</a>
+            <a href="#" class="list-group-item">Link 7</a>
+          </div>
+        </div>
+          <!--  	<ul class="nav nav-pills nav-stacked">
+            		<li><a href="#">test<span class="badge">23</span></a></li>
+            		<li class="active"><a href="#">test<span class="badge">23</span></a></li>
+            		<li><a href="#">test<span class="badge">23</span></a></li>
+            		<li><a href="#">test<span class="badge">23</span></a></li>
+            	</ul>
+
+            </div>-->
+            <div class="col-md-4">
+             
+              <h3 class="text-center">Type 2</h3>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean hendrerit quis augue sit amet mollis. Mauris id turpis diam. Ut pellentesque justo dolor, nec eleifend mauris euismod vitae. Morbi diam est, ornare non felis sit amet, elementum ultricies ante. Mauris id condimentum mauris. Nunc eleifend et enim eu sagittis. In congue, sapien nec vulputate pulvinar, tellus leo porttitor nibh, at rhoncus tellus lacus ac metus. Vestibulum pharetra scelerisque est sed tincidunt. Ut congue, quam a molestie luctus, quam orci congue erat, laoreet interdum lectus justo ac urna. Vestibulum eleifend tellus sit amet urna egestas tempus. Proin ac pretium nisi. Phasellus sit amet tincidunt magna, quis tincidunt sapien. Quisque quis pretium diam, ut consectetur ligula. Sed condimentum purus viverra auctor porta. Ut in bibendum velit. Curabitur eu leo mattis, pretium sapien sed, iaculis mauris.</p>
+             
+            </div>
+            <div class="col-md-4">
+              
+              <h3 class="text-center">Type 3</h3>
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean hendrerit quis augue sit amet mollis. Mauris id turpis diam. Ut pellentesque justo dolor, nec eleifend mauris euismod vitae. Morbi diam est, ornare non felis sit amet, elementum ultricies ante. Mauris id condimentum mauris. Nunc eleifend et enim eu sagittis. In congue, sapien nec vulputate pulvinar, tellus leo porttitor nibh, at rhoncus tellus lacus ac metus. Vestibulum pharetra scelerisque est sed tincidunt. Ut congue, quam a molestie luctus, quam orci congue erat, laoreet interdum lectus justo ac urna. Vestibulum eleifend tellus sit amet urna egestas tempus. Proin ac pretium nisi. Phasellus sit amet tincidunt magna, quis tincidunt sapien. Quisque quis pretium diam, ut consectetur ligula. Sed condimentum purus viverra auctor porta. Ut in bibendum velit. Curabitur eu leo mattis, pretium sapien sed, iaculis mauris.</p>
+             
+            </div>
+          </div>
+        </div>
+
+
+		<div id="application">
+		</div> 
+
+	</body>
+	<script data-main="js/main" src="js/<%= title %><% if (min) { %>.min<% } %>.js"></script>
+	<script>
+		$(document).ready(function() {
+		  $('[data-toggle=offcanvas]').click(function() {
+		    $('.row-offcanvas').toggleClass('active');
+		  });
+		});
+	</script>
+</html>
