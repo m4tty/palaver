@@ -34,8 +34,9 @@ func LoginGoogle(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 			SaveUserResource(c, user)
 		}
 	}
-
-	http.Redirect(w, r, "/login_success", http.StatusFound)
+	params := r.URL.Query()
+	returnUrl := params.Get("return")
+	http.Redirect(w, r, returnUrl+"test", http.StatusFound)
 }
 func GetLoggedInUser(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	if cu := user.Current(c); cu != nil {

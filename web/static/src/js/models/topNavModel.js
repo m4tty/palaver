@@ -10,6 +10,9 @@ var TopNavModel = function() {
 	this.avatarUrl = '';
 	this.useGravatar = false;
 	this.isSignedIn = false;
+	this.loginLocation = "/login/google";
+	this.currentLocation = window.location.pathname;
+
 	jQuery.ajax({
 		type: 'GET',
 		url: 'http://localhost:8080/users/current',
@@ -18,7 +21,8 @@ var TopNavModel = function() {
 			self.screenName = decodeURIComponent(data.ScreenName);
 			//console.log(data);
 			self.avatarUrl = decodeURIComponent(data.AvatarUrl);
-			self.isSignedIn = true
+			self.isSignedIn = true;
+			self.useGravatar = false;
 		},
 		dataType: 'json',
 		crossDomain: true

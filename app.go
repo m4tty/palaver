@@ -3,6 +3,7 @@
 package main
 
 import (
+	"appengine"
 	"github.com/gorilla/mux"
 	"github.com/m4tty/palaver/web/handlers"
 	"github.com/mjibson/appstats"
@@ -42,5 +43,14 @@ func init() {
 	router.Handle("/users/{userId}/bundles", appstats.NewHandler(handlers.CreateUserBundleHandler)).Name("bundles-create").Methods("POST")
 	router.Handle("/bundles/{bundleId}", appstats.NewHandler(handlers.DeleteBundleHandler)).Name("bundles-delete").Methods("DELETE")
 
+	router.Handle("/static/{main}/{page}", appstats.NewHandler(ServeMain)).Name("serve-main")
+	router.Handle("/static/{main}", appstats.NewHandler(ServeMain)).Name("serve-main")
 	http.Handle("/", router)
+}
+
+func ServeMain(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "web/static/dist/index.debug.html")
+}
+func ServeMain2(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "web/static/dist/index.debug.html")
 }

@@ -4,8 +4,14 @@ runtime: go
 api_version: go1
 
 handlers:
-- url: /static
-  static_dir: web/static/dist
+
+
+
+- url: /static/css
+  static_dir: web/static/dist/css
+
+- url: /static/js
+  static_dir: web/static/dist/js
 
 - url: /login/google
   login: required
