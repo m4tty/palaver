@@ -43,14 +43,23 @@ func init() {
 	router.Handle("/users/{userId}/bundles", appstats.NewHandler(handlers.CreateUserBundleHandler)).Name("bundles-create").Methods("POST")
 	router.Handle("/bundles/{bundleId}", appstats.NewHandler(handlers.DeleteBundleHandler)).Name("bundles-delete").Methods("DELETE")
 
-	router.Handle("/static/{main}/{page}", appstats.NewHandler(ServeMain)).Name("serve-main")
-	router.Handle("/static/{main}", appstats.NewHandler(ServeMain)).Name("serve-main")
+	// //router.Handle("/static/return/main", appstats.NewHandler(ServeMain)).Name("serve-main")
+	router.Handle("/static/return/main", appstats.NewHandler(ServeMain)).Name("serve-main")
+	router.Handle("/static/return/profile", appstats.NewHandler(ServeMain)).Name("serve-main")
+	// router.Handle("/static/return/dashboard", appstats.NewHandler(ServeMain)).Name("serve-main")
+
+	// router.Handle("/static/return/{section:\\(main|profile|dashboard\\)", appstats.NewHandler(ServeMain)).Name("serve-main")
+	// router.Handle("/static/return/{section:\\(main|profile|dashboard\\)", appstats.NewHandler(ServeMain)).Name("serve-main")
+
+	// router.PathPrefix("/static/return/").Handler(http.StripPrefix("/static/return", http.FileServer(http.Dir("web/static/dist/"))))
+
 	http.Handle("/", router)
 }
 
 func ServeMain(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "web/static/dist/index.debug.html")
 }
-func ServeMain2(c appengine.Context, w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "web/static/dist/index.debug.html")
-}
+
+// func ServeMain2(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+// 	http.ServeFile(w, r, "web/static/dist/index.debug.html")
+// }

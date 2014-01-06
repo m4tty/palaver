@@ -5,13 +5,10 @@ api_version: go1
 
 handlers:
 
+#/todo... add a version to rev these urls so we can cache them way out
+- url: /static/return(?!(\/main|\/profile))
+  static_dir: web/static/dist
 
-
-- url: /static/css
-  static_dir: web/static/dist/css
-
-- url: /static/js
-  static_dir: web/static/dist/js
 
 - url: /login/google
   login: required
