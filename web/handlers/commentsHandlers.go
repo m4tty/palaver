@@ -112,7 +112,7 @@ func AddCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Reque
 	fmt.Fprint(w, "single comment"+commentId)
 
 	decoder := json.NewDecoder(r.Body)
-	var com resources.Comment
+	var com resources.CommentResource
 	err := decoder.Decode(&com)
 	if err != nil {
 		serveError(c, w, err)
@@ -205,7 +205,7 @@ func appendUserIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func mapResourceToData(commentResource *resources.Comment, commentData *data.Comment) {
+func mapResourceToData(commentResource *resources.CommentResource, commentData *data.Comment) {
 	commentData.Id = commentResource.Id
 	commentData.Text = commentResource.Text
 	commentData.CreatedDate = commentResource.CreatedDate

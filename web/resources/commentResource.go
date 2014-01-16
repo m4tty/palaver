@@ -2,7 +2,7 @@ package resources
 
 import "time"
 
-type Comment struct {
+type CommentResource struct {
 	Id           string    `json:"id"`
 	Text         string    `json:"text"`
 	CreatedDate  time.Time `json:"createdDate"`

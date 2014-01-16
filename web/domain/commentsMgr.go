@@ -3,27 +3,40 @@ package domain
 import (
 	"github.com/m4tty/palaver/data/comments"
 	"github.com/m4tty/palaver/web/resources"
+	"time"
 )
 
 type CommentsMgr struct {
 	CommentsDataManager *data.CommentDataManager
 }
 
-func (dm CommentsMgr) GetCommentById(id string) (comment *resources.Comment, err error) {
-	dComment, _ := dm.GetCommentById(id)
+func (dm CommentsMgr) GetCommentById(id string) (comment *resources.CommentResource, err error) {
+	dComment, err := dm.GetCommentById(id)
 	if err != nil {
 		return nil, err
 	}
-	var commentResource *resource.Comment = new(resource.Comment)
+	var commentResource *resources.CommentResource = new(resources.CommentResource)
 	mapDataToResource(*dComment, commentResource)
 	return commentResource, nil
 }
 
-func (dm CommentsMgr) GetComments() (bundles *[]resources.Comment, err error) {
-	return
+func (dm CommentsMgr) GetComments() (bundles []*resources.CommentResource, err error) {
+	dComments, err := dm.GetComments()
+	if err != nil {
+		return nil, err
+	}
+
+	var comments []*resources.CommentResource
+	comments = make([]*resources.CommentResource, len(dComments))
+	for j, comment := range dComments {
+		var commentResource *resources.CommentResource = new(resources.CommentResource)
+		comments[j] = mapDataToResource(*dComment, commentResource)
+	}
+
+	return comments, nil
 }
 
-func (dm CommentsMgr) SaveComment(bundle *resources.Comment) (key string, err error) {
+func (dm CommentsMgr) SaveComment(bundle *resources.CommentResource) (key string, err error) {
 	return
 }
 
@@ -32,7 +45,7 @@ func (dm CommentsMgr) DeleteComment(id string) (err error) {
 }
 
 // mapper...
-func mapResourceToData(commentResource *resources.Comment, commentData *data.Comment) {
+func mapResourceToData(commentResource *resources.CommentResource, commentData *data.Comment) {
 	commentData.Id = commentResource.Id
 	commentData.Text = commentResource.Text
 	commentData.CreatedDate = commentResource.CreatedDate
@@ -56,7 +69,7 @@ func mapResourceToData(commentResource *resources.Comment, commentData *data.Com
 	commentData.Author.Avatar.Url = commentResource.Author.Avatar.Url
 }
 
-func mapDataToResource(commentData *data.Comment, commentResource *resources.Comment) {
+func mapDataToResource(commentData *data.Comment, commentResource *resources.CommentResource) {
 	commentResource.Id = commentData.Id
 
 	commentResource.Text = commentData.Text
