@@ -10,7 +10,7 @@ var TopNavModel = function() {
 	this.avatarUrl = '';
 	this.useGravatar = false;
 	this.isSignedIn = false;
-	this.loginLocation = "/login/google";
+	this.loginLocation = '/login/google';
 	this.currentLocation = window.location.pathname;
 
 	jQuery.ajax({
