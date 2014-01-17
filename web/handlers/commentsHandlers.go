@@ -8,6 +8,7 @@ import "github.com/gorilla/mux"
 
 import "github.com/m4tty/palaver/web/resources"
 import "github.com/m4tty/palaver/data/comments"
+import "github.com/m4tty/palaver/web/domain"
 import "appengine"
 import "appengine/user"
 import "time"
@@ -27,8 +28,9 @@ func CommentsHandler(c appengine.Context, w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	dataManager := data.GetDataManager(&c)
-	result, err := dataManager.GetComments()
+	dataManager := commentDataMgr.GetDataManager(&c)
+	dataMgr := domain.NewCommentsMgr(dataManager)
+	result, err := dataMgr.GetComments()
 
 	//err = errors.New("asdf")
 	if err != nil {
@@ -50,7 +52,7 @@ func CommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request)
 	vars := mux.Vars(r)
 	commentId := vars["commentId"]
 
-	dataManager := data.GetDataManager(&c)
+	dataManager := commentDataMgr.GetDataManager(&c)
 	result, err := dataManager.GetCommentById(commentId)
 
 	if checkLastModified(w, r, result.LastModified) {
@@ -81,7 +83,7 @@ func DeleteHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) 
 
 	vars := mux.Vars(r)
 	commentId := vars["commentId"]
-	dataManager := data.GetDataManager(&c)
+	dataManager := commentDataMgr.GetDataManager(&c)
 	err := dataManager.DeleteComment(commentId)
 	if err != nil {
 		serveError(c, w, err)
@@ -117,13 +119,13 @@ func AddCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		serveError(c, w, err)
 	}
-	var dCom *data.Comment = new(data.Comment)
+	var dCom *commentDataMgr.Comment = new(commentDataMgr.Comment)
 
 	dCom.LastModified = time.Now().UTC()
 	mapResourceToData(&com, dCom)
 
 	//c := appengine.NewContext(r)
-	dataManager := data.GetDataManager(&c)
+	dataManager := commentDataMgr.GetDataManager(&c)
 	_, saveErr := dataManager.SaveComment(dCom)
 	if saveErr != nil {
 		serveError(c, w, saveErr)
@@ -150,7 +152,7 @@ func LikeCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Requ
 	commentId := vars["commentId"]
 	fmt.Fprint(w, "single comment"+commentId)
 
-	dataManager := data.GetDataManager(&c)
+	dataManager := commentDataMgr.GetDataManager(&c)
 	result, err := dataManager.GetCommentById(commentId)
 	if err != nil {
 		serveError(c, w, err)
@@ -160,7 +162,7 @@ func LikeCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Requ
 	result.LastModified = time.Now().UTC()
 
 	//c := appengine.NewContext(r)
-	//dataManager := data.GetDataManager(&c)
+	//dataManager := commentDataMgr.GetDataManager(&c)
 	_, saveErr := dataManager.SaveComment(&result)
 	if saveErr != nil {
 		serveError(c, w, saveErr)
@@ -179,7 +181,7 @@ func DislikeCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.R
 	commentId := vars["commentId"]
 	fmt.Fprint(w, "single comment"+commentId)
 
-	dataManager := data.GetDataManager(&c)
+	dataManager := commentDataMgr.GetDataManager(&c)
 	result, err := dataManager.GetCommentById(commentId)
 	if err != nil {
 		serveError(c, w, err)
@@ -189,7 +191,7 @@ func DislikeCommentHandler(c appengine.Context, w http.ResponseWriter, r *http.R
 	result.LastModified = time.Now().UTC()
 
 	//c := appengine.NewContext(r)
-	//dataManager := data.GetDataManager(&c)
+	//dataManager := commentDataMgr.GetDataManager(&c)
 	_, saveErr := dataManager.SaveComment(&result)
 	if saveErr != nil {
 		serveError(c, w, saveErr)
@@ -205,7 +207,7 @@ func appendUserIfMissing(slice []string, i string) []string {
 	return append(slice, i)
 }
 
-func mapResourceToData(commentResource *resources.CommentResource, commentData *data.Comment) {
+func mapResourceToData(commentResource *resources.CommentResource, commentData *commentDataMgr.Comment) {
 	commentData.Id = commentResource.Id
 	commentData.Text = commentResource.Text
 	commentData.CreatedDate = commentResource.CreatedDate
@@ -217,14 +219,14 @@ func mapResourceToData(commentResource *resources.CommentResource, commentData *
 	commentData.LikedBy = commentResource.LikedBy
 	commentData.DislikedBy = commentResource.DislikedBy
 
-	var a *data.Author = new(data.Author)
+	var a *commentDataMgr.Author = new(commentDataMgr.Author)
 	commentData.Author = *a
 	commentData.Author.Id = commentResource.Author.Id
 	commentData.Author.DisplayName = commentResource.Author.DisplayName
 	commentData.Author.Email = commentResource.Author.Email
 	commentData.Author.ProfileUrl = commentResource.Author.ProfileUrl
 
-	var av *data.Avatar = new(data.Avatar)
+	var av *commentDataMgr.Avatar = new(commentDataMgr.Avatar)
 	commentData.Author.Avatar = *av
 	commentData.Author.Avatar.Url = commentResource.Author.Avatar.Url
 }

@@ -1,4 +1,4 @@
-package data
+package commentDataMgr
 
 type CommentDataManager interface {
 	GetComments() (results []*Comment, err error)

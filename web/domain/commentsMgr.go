@@ -7,21 +7,29 @@ import (
 )
 
 type CommentsMgr struct {
-	CommentsDataManager *data.CommentDataManager
+	commentDataMgr.CommentDataManager
+}
+
+func NewCommentsMgr(cdm commentDataMgr.CommentDataManager) *CommentsMgr {
+	return &CommentsMgr{cdm}
 }
 
 func (dm CommentsMgr) GetCommentById(id string) (comment *resources.CommentResource, err error) {
-	dComment, err := dm.GetCommentById(id)
+	dComment, err := dm.CommentDataManager.GetCommentById(id)
+	//var dataman = dm.commentsDataManager
+
 	if err != nil {
 		return nil, err
 	}
 	var commentResource *resources.CommentResource = new(resources.CommentResource)
-	mapDataToResource(*dComment, commentResource)
+
+	mapDataToResource(&dComment, commentResource)
+
 	return commentResource, nil
 }
 
 func (dm CommentsMgr) GetComments() (bundles []*resources.CommentResource, err error) {
-	dComments, err := dm.GetComments()
+	dComments, err := dm.CommentDataManager.GetComments()
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +38,8 @@ func (dm CommentsMgr) GetComments() (bundles []*resources.CommentResource, err e
 	comments = make([]*resources.CommentResource, len(dComments))
 	for j, comment := range dComments {
 		var commentResource *resources.CommentResource = new(resources.CommentResource)
-		comments[j] = mapDataToResource(*dComment, commentResource)
+		mapDataToResource(comment, commentResource)
+		comments[j] = commentResource
 	}
 
 	return comments, nil
@@ -45,7 +54,7 @@ func (dm CommentsMgr) DeleteComment(id string) (err error) {
 }
 
 // mapper...
-func mapResourceToData(commentResource *resources.CommentResource, commentData *data.Comment) {
+func mapResourceToData(commentResource *resources.CommentResource, commentData *commentDataMgr.Comment) {
 	commentData.Id = commentResource.Id
 	commentData.Text = commentResource.Text
 	commentData.CreatedDate = commentResource.CreatedDate
@@ -57,19 +66,19 @@ func mapResourceToData(commentResource *resources.CommentResource, commentData *
 	commentData.LikedBy = commentResource.LikedBy
 	commentData.DislikedBy = commentResource.DislikedBy
 
-	var a *data.Author = new(data.Author)
+	var a *commentDataMgr.Author = new(commentDataMgr.Author)
 	commentData.Author = *a
 	commentData.Author.Id = commentResource.Author.Id
 	commentData.Author.DisplayName = commentResource.Author.DisplayName
 	commentData.Author.Email = commentResource.Author.Email
 	commentData.Author.ProfileUrl = commentResource.Author.ProfileUrl
 
-	var av *data.Avatar = new(data.Avatar)
+	var av *commentDataMgr.Avatar = new(commentDataMgr.Avatar)
 	commentData.Author.Avatar = *av
 	commentData.Author.Avatar.Url = commentResource.Author.Avatar.Url
 }
 
-func mapDataToResource(commentData *data.Comment, commentResource *resources.CommentResource) {
+func mapDataToResource(commentData *commentDataMgr.Comment, commentResource *resources.CommentResource) {
 	commentResource.Id = commentData.Id
 
 	commentResource.Text = commentData.Text
@@ -82,14 +91,14 @@ func mapDataToResource(commentData *data.Comment, commentResource *resources.Com
 	commentResource.LikedBy = commentData.LikedBy
 	commentResource.DislikedBy = commentData.DislikedBy
 
-	var a *resource.Author = new(resource.Author)
+	var a *resources.Author = new(resources.Author)
 	commentResource.Author = *a
 	commentResource.Author.Id = commentData.Author.Id
 	commentResource.Author.DisplayName = commentData.Author.DisplayName
 	commentResource.Author.Email = commentData.Author.Email
 	commentResource.Author.ProfileUrl = commentData.Author.ProfileUrl
 
-	var av *resource.Avatar = new(resource.Avatar)
+	var av *resources.Avatar = new(resources.Avatar)
 	commentResource.Author.Avatar = *av
 	commentResource.Author.Avatar.Url = commentData.Author.Avatar.Url
 }
