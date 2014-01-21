@@ -1,4 +1,4 @@
-package data
+package bundleDataMgr
 
 import (
 	"appengine"
@@ -44,19 +44,24 @@ func (dm appEngineBundleDataManager) GetBundles() (results []*Bundle, err error)
 	return
 }
 
-func (dm appEngineBundleDataManager) GetBundlesByUserId(userid string) (results *[]Bundle, err error) {
+func (dm appEngineBundleDataManager) GetBundlesByUserId(userid string) (results []*Bundle, err error) {
 	var ctx = *dm.currentContext
+	var bundles []*Bundle
 	//var bundles []*Bundle
-	var bundles []Bundle
 	g := goon.FromContext(ctx)
-	ctx.Infof("GetBundlesByUserId" + userid)
-
-	q := datastore.NewQuery(g.Key(&Bundle{}).Kind()).Filter("OwnerId =", userid)
+	q := datastore.NewQuery(g.Key(&Bundle{}).Kind()).Filter("OwnerId =", userid).KeysOnly()
+	//q := datastore.NewQuery("Bundle").Filter("OwnerId =", userid)
 	ctx.Infof("NewQuery" + userid)
-	_, error := g.GetAll(q, &bundles)
-	ctx.Infof("GetAll" + userid)
-	err = error
-	results = &bundles
+	keys, _ := g.GetAll(q, results)
+
+	bundles = make([]*Bundle, len(keys))
+	for j, key := range keys {
+		bundles[j] = &Bundle{Id: key.StringID()}
+	}
+	err = g.GetMulti(bundles)
+	ctx.Infof("GetAllvvv" + userid)
+
+	results = bundles
 	return
 }
 

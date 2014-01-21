@@ -7,10 +7,11 @@ import "fmt"
 import "github.com/gorilla/mux"
 
 import "github.com/m4tty/palaver/web/resources"
+import "github.com/m4tty/palaver/web/domain/bundles"
 import "github.com/m4tty/palaver/data/bundles"
 import "appengine"
 import "appengine/user"
-import "time"
+import "appengine/datastore"
 
 const BundleTimeFormat = "Mon, 02 Jan 2006 15:04:05 GMT"
 
@@ -27,18 +28,17 @@ func UserBundlesHandler(c appengine.Context, w http.ResponseWriter, r *http.Requ
 	}
 	userId := vars["userId"]
 	c.Infof("UserBundlesHandler" + userId)
-	//fmt.Fprint(w, "UserBundlesHandler:"+userId)
 
-	dataManager := data.GetDataManager(&c)
-	result, err := dataManager.GetBundlesByUserId(userId)
+	dataManager := bundleDataMgr.GetDataManager(&c)
+	dataMgr := bundlesDomain.NewBundlesMgr(dataManager)
+	results, err := dataMgr.GetBundlesByUserId(userId)
 
-	//err = errors.New("asdf")
 	if err != nil {
 		serveError(c, w, err)
 		return
 	}
 
-	js, error := json.MarshalIndent(result, "", "  ")
+	js, error := json.MarshalIndent(results, "", "  ")
 	if error != nil {
 		serveError(c, w, error)
 		return
@@ -53,8 +53,9 @@ func UserBundleHandler(c appengine.Context, w http.ResponseWriter, r *http.Reque
 	bundleId := vars["bundleId"]
 	//userId := vars["userId"]
 
-	dataManager := data.GetDataManager(&c)
-	result, err := dataManager.GetBundleById(bundleId)
+	dataManager := bundleDataMgr.GetDataManager(&c)
+	dataMgr := bundlesDomain.NewBundlesMgr(dataManager)
+	result, err := dataMgr.GetBundleById(bundleId)
 
 	if checkLastModified(w, r, result.LastModified) {
 		return
@@ -74,10 +75,6 @@ func UserBundleHandler(c appengine.Context, w http.ResponseWriter, r *http.Reque
 }
 
 func BundlesHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
-	//c := appengine.NewContext(r)
-
-	//TODO: don't use the bundle from context, and leverage instead injecting Bundle in to the Handler, which will come
-	// over from the auth library (probably)
 	u := user.Current(c)
 
 	if u == nil {
@@ -85,8 +82,9 @@ func BundlesHandler(c appengine.Context, w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	dataManager := data.GetDataManager(&c)
-	result, err := dataManager.GetBundles()
+	dataManager := bundleDataMgr.GetDataManager(&c)
+	dataMgr := bundlesDomain.NewBundlesMgr(dataManager)
+	result, err := dataMgr.GetBundles()
 
 	//err = errors.New("asdf")
 	if err != nil {
@@ -107,25 +105,35 @@ func BundleHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) 
 
 	vars := mux.Vars(r)
 	bundleId := vars["bundleId"]
-	fmt.Fprint(w, "BundleHandler:"+bundleId)
-	dataManager := data.GetDataManager(&c)
-	result, err := dataManager.GetBundleById(bundleId)
 
-	if checkLastModified(w, r, result.LastModified) {
-		return
-	}
-
+	dataManager := bundleDataMgr.GetDataManager(&c)
+	dataMgr := bundlesDomain.NewBundlesMgr(dataManager)
+	result, err := dataMgr.GetBundleById(bundleId)
 	if err != nil {
-		serveError(c, w, err)
-		return
-	}
-	js, error := json.MarshalIndent(result, "", "  ")
-	if error != nil {
-		serveError(c, w, error)
-		return
+		if err == datastore.ErrNoSuchEntity {
+			http.Error(w, "Not Found", 404)
+			return
+		} else {
+			serveError(c, w, err)
+			return
+		}
+
+	} else {
+		if result != nil {
+			if checkLastModified(w, r, result.LastModified) {
+				return
+			}
+
+			js, error := json.MarshalIndent(result, "", "  ")
+			if error != nil {
+				serveError(c, w, error)
+				return
+			}
+
+			w.Write(js)
+		}
 	}
 
-	w.Write(js)
 }
 
 type bundleAppError struct {
@@ -139,30 +147,13 @@ func DeleteBundleHandler(c appengine.Context, w http.ResponseWriter, r *http.Req
 
 	vars := mux.Vars(r)
 	bundleId := vars["bundleId"]
-	dataManager := data.GetDataManager(&c)
-	err := dataManager.DeleteBundle(bundleId)
+	dataManager := bundleDataMgr.GetDataManager(&c)
+	dataMgr := bundlesDomain.NewBundlesMgr(dataManager)
+	err := dataMgr.DeleteBundle(bundleId)
 	if err != nil {
 		serveError(c, w, err)
 	}
-
 }
-
-//promote to utils
-// func serveJSONError(c appengine.Context, w http.ResponseWriter, code int, err error) {
-// 	w.WriteHeader(code)
-// 	w.Header().Set("Content-Type", "text/json; charset=utf-8")
-
-// 	ae := &bundleAppError{"", err, http.StatusText(code), code}
-// 	c.Errorf("%v", err)
-// 	js, _ := json.MarshalIndent(ae, "", "  ")
-// 	w.Write(js)
-
-// }
-
-// func serveError(c appengine.Context, w http.ResponseWriter, err error) {
-// 	serveJSONError(c, w, 500, err)
-
-// }
 
 func AddBundleHandler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	//c := appengine.NewContext(r)
@@ -171,19 +162,16 @@ func AddBundleHandler(c appengine.Context, w http.ResponseWriter, r *http.Reques
 	fmt.Fprint(w, "single bundle"+bundleId)
 
 	decoder := json.NewDecoder(r.Body)
-	var bundle resources.Bundle
+	var bundle resources.BundleResource
 	err := decoder.Decode(&bundle)
 	if err != nil {
 		serveError(c, w, err)
 	}
-	var dBundle *data.Bundle = new(data.Bundle)
 
-	dBundle.LastModified = time.Now().UTC()
-	mapBundleResourceToData(&bundle, dBundle)
-
-	//c := appengine.NewContext(r)
-	dataManager := data.GetDataManager(&c)
-	_, saveErr := dataManager.SaveBundle(dBundle)
+	dataManager := bundleDataMgr.GetDataManager(&c)
+	dataMgr := bundlesDomain.NewBundlesMgr(dataManager)
+	_, saveErr := dataMgr.SaveBundle(&bundle)
+	//TODO: return location header w/ the id that was created during save
 	if saveErr != nil {
 		serveError(c, w, saveErr)
 	}
@@ -197,36 +185,18 @@ func CreateUserBundleHandler(c appengine.Context, w http.ResponseWriter, r *http
 	fmt.Fprint(w, "single bundle"+bundleId)
 
 	decoder := json.NewDecoder(r.Body)
-	var bundle resources.Bundle
+	var bundle resources.BundleResource
 	err := decoder.Decode(&bundle)
 	if err != nil {
 		serveError(c, w, err)
 	}
 	bundle.OwnerId = userId
 
-	var dBundle *data.Bundle = new(data.Bundle)
-	dBundle.Created = time.Now().UTC()
-	dBundle.LastModified = time.Now().UTC()
-	mapBundleResourceToData(&bundle, dBundle)
+	dataManager := bundleDataMgr.GetDataManager(&c)
+	dataMgr := bundlesDomain.NewBundlesMgr(dataManager)
+	_, saveErr := dataMgr.SaveBundle(&bundle)
 
-	//c := appengine.NewContext(r)
-	dataManager := data.GetDataManager(&c)
-	_, saveErr := dataManager.SaveBundle(dBundle)
 	if saveErr != nil {
 		serveError(c, w, saveErr)
 	}
-}
-
-func mapBundleResourceToData(bundleResource *resources.Bundle, bundleData *data.Bundle) {
-	bundleData.Id = bundleResource.Id
-	bundleData.Name = bundleResource.Name
-	bundleData.OwnerId = bundleResource.OwnerId
-	bundleData.Description = bundleResource.Description
-	bundleData.Stars = bundleResource.Stars
-	bundleData.Likes = bundleResource.Likes
-	bundleData.Dislikes = bundleResource.Dislikes
-	bundleData.LikedBy = bundleResource.LikedBy
-	bundleData.DislikedBy = bundleResource.DislikedBy
-	bundleData.LastModified = time.Now().UTC()
-	bundleData.Created = bundleResource.Created
 }

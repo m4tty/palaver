@@ -1,4 +1,4 @@
-package data
+package bundleDataMgr
 
 import "time"
 
@@ -7,8 +7,8 @@ type Bundle struct {
 	Name         string
 	OwnerId      string
 	IsPublic     bool
-	Description  string
-	Created      time.Time
+	Description  string `datastore:",noindex"`
+	CreatedDate  time.Time
 	LastModified time.Time
 	// Owner        Owner
 	Stars      int
@@ -16,6 +16,7 @@ type Bundle struct {
 	Dislikes   int
 	LikedBy    []string
 	DislikedBy []string
+	Tags       []string
 }
 
 // //isApproved, isFlagged, isDeleted

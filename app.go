@@ -20,6 +20,7 @@ import (
 var router = new(mux.Router)
 
 func init() {
+
 	router.Handle("/logout", appstats.NewHandler(handlers.Logout)).Name("logout-google")
 	router.Handle("/login/google", appstats.NewHandler(handlers.LoginGoogle)).Name("login-google")
 	router.Handle("/users/current", appstats.NewHandler(handlers.GetLoggedInUser)).Name("current-user")
@@ -47,6 +48,8 @@ func init() {
 	router.Handle("/static/return/main", appstats.NewHandler(ServeMain)).Name("serve-main")
 	router.Handle("/static/return/profile", appstats.NewHandler(ServeMain)).Name("serve-main")
 	// router.Handle("/static/return/dashboard", appstats.NewHandler(ServeMain)).Name("serve-main")
+
+	router.Handle("/dashboard/{userId}/home", appstats.NewHandler(handlers.ServeUserHome)).Name("serve-main")
 
 	// router.Handle("/static/return/{section:\\(main|profile|dashboard\\)", appstats.NewHandler(ServeMain)).Name("serve-main")
 	// router.Handle("/static/return/{section:\\(main|profile|dashboard\\)", appstats.NewHandler(ServeMain)).Name("serve-main")

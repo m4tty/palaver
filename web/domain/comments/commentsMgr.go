@@ -1,4 +1,4 @@
-package domain
+package commentsDomain
 
 import (
 	"github.com/m4tty/palaver/data/comments"
@@ -16,7 +16,6 @@ func NewCommentsMgr(cdm commentDataMgr.CommentDataManager) *CommentsMgr {
 
 func (dm CommentsMgr) GetCommentById(id string) (comment *resources.CommentResource, err error) {
 	dComment, err := dm.CommentDataManager.GetCommentById(id)
-	//var dataman = dm.commentsDataManager
 
 	if err != nil {
 		return nil, err

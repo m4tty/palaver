@@ -1,4 +1,4 @@
-package data
+package bundleDataMgr
 
 import "appengine"
 

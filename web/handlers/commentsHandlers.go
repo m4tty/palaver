@@ -8,9 +8,10 @@ import "github.com/gorilla/mux"
 
 import "github.com/m4tty/palaver/web/resources"
 import "github.com/m4tty/palaver/data/comments"
-import "github.com/m4tty/palaver/web/domain"
+import "github.com/m4tty/palaver/web/domain/comments"
 import "appengine"
 import "appengine/user"
+import "appengine/datastore"
 import "time"
 import "errors"
 
@@ -29,7 +30,7 @@ func CommentsHandler(c appengine.Context, w http.ResponseWriter, r *http.Request
 	}
 
 	dataManager := commentDataMgr.GetDataManager(&c)
-	dataMgr := domain.NewCommentsMgr(dataManager)
+	dataMgr := commentsDomain.NewCommentsMgr(dataManager)
 	result, err := dataMgr.GetComments()
 
 	//err = errors.New("asdf")
@@ -53,23 +54,33 @@ func CommentHandler(c appengine.Context, w http.ResponseWriter, r *http.Request)
 	commentId := vars["commentId"]
 
 	dataManager := commentDataMgr.GetDataManager(&c)
-	result, err := dataManager.GetCommentById(commentId)
-
-	if checkLastModified(w, r, result.LastModified) {
-		return
-	}
+	dataMgr := commentsDomain.NewCommentsMgr(dataManager)
+	result, err := dataMgr.GetCommentById(commentId)
 
 	if err != nil {
-		serveError(c, w, err)
-		return
-	}
-	js, error := json.MarshalIndent(result, "", "  ")
-	if error != nil {
-		serveError(c, w, error)
-		return
-	}
+		if err == datastore.ErrNoSuchEntity {
+			http.Error(w, "Not Found", 404)
+			return
+		} else {
+			serveError(c, w, err)
+			return
+		}
 
-	w.Write(js)
+	} else {
+		if result != nil {
+			if checkLastModified(w, r, result.LastModified) {
+				return
+			}
+
+			js, error := json.MarshalIndent(result, "", "  ")
+			if error != nil {
+				serveError(c, w, error)
+				return
+			}
+
+			w.Write(js)
+		}
+	}
 }
 
 type appError struct {

@@ -6,7 +6,15 @@ api_version: go1
 handlers:
 
 #/todo... add a version to rev these urls so we can cache them way out
+
+#this one probably not needed...
 - url: /static/return(?!(\/main|\/profile))
+  static_dir: web/static/dist
+
+- url: /assets
+  static_dir: web/static/dist
+
+- url: /dashboard/([^/])+(?!(\/home))
   static_dir: web/static/dist
 
 
