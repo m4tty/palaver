@@ -42,7 +42,7 @@ func init() {
 	router.Handle("/users/{userId}/bundles", appstats.NewHandler(handlers.UserBundlesHandler)).Name("bundles-getall").Methods("GET")
 	router.Handle("/users/{userId}/bundles/{bundleId}", appstats.NewHandler(handlers.UserBundleHandler)).Name("bundles-get").Methods("GET")
 	router.Handle("/users/{userId}/bundles", appstats.NewHandler(handlers.CreateUserBundleHandler)).Name("bundles-create").Methods("POST")
-	router.Handle("/bundles/{bundleId}", appstats.NewHandler(handlers.DeleteBundleHandler)).Name("bundles-delete").Methods("DELETE")
+	router.Handle("/bundlasdfes/{bundleId}", appstats.NewHandler(handlers.DeleteBundleHandler)).Name("bundles-delete").Methods("DELETE")
 
 	// //router.Handle("/static/return/main", appstats.NewHandler(ServeMain)).Name("serve-main")
 	router.Handle("/static/return/main", appstats.NewHandler(ServeMain)).Name("serve-main")
@@ -55,7 +55,11 @@ func init() {
 	// router.Handle("/static/return/{section:\\(main|profile|dashboard\\)", appstats.NewHandler(ServeMain)).Name("serve-main")
 
 	// router.PathPrefix("/static/return/").Handler(http.StripPrefix("/static/return", http.FileServer(http.Dir("web/static/dist/"))))
-
+	router.Handle("/events", appstats.NewHandler(handlers.GetAllEventsHandler)).Name("events-getall").Methods("GET")
+	router.Handle("/events", appstats.NewHandler(handlers.AddEventHandler)).Name("events-create").Methods("POST")
+	router.Handle("/events/{id}", appstats.NewHandler(handlers.GetEventHandler)).Name("events-get").Methods("GET")
+	router.Handle("/events/{id}", appstats.NewHandler(handlers.UpdateEventHandler)).Name("events-update").Methods("PUT")
+	router.Handle("/events/{id}", appstats.NewHandler(handlers.DeleteEventHandler)).Name("events-delete").Methods("DELETE")
 	http.Handle("/", router)
 }
 
